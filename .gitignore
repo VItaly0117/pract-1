@@ -1,5 +1,8 @@
 .DS_Store
 .vscode/
-__pycache__/
 *.docx
-TaskThree/students.json
+TaskThree/students.csv
+TaskThree/anketa
+TaskThree/anketa_gui
+TaskFour/guess
+TaskFour/guess_gui
