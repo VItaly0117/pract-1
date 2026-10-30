@@ -5,10 +5,8 @@
 using namespace std;
 
 const int MAX_MISSES = 5;
-const int WORD_COUNT = 7;
-const int MAX_LENGTH = 7;
 
-char WORDS[WORD_COUNT][MAX_LENGTH] = {
+char WORDS[7][7] = {
     {'t', 'h', 'i', 's'},
     {'i', 's'},
     {'a'},
@@ -31,17 +29,17 @@ void print_mask(char mask[], int length) {
 
 int main() {
     random_device random;
-    char *word = WORDS[random() % WORD_COUNT];
+    char *word = WORDS[random() % 7];
     int length = strlen(word);
 
-    char mask[MAX_LENGTH];
+    char mask[7];
     for (int i = 0; i < length; i++) {
         mask[i] = '*';
     }
 
     int misses = 0;
     int opened = 0;
-    cout << "Вгадай слово! Загадано слово з " << length << " літер, можна помилитися " << MAX_MISSES << " разів\n";
+    cout << "Загадано слово з " << length << " літер\n";
 
     while (opened < length && misses < MAX_MISSES) {
         print_mask(mask, length);
@@ -49,22 +47,11 @@ int main() {
         int position;
         cout << "Літера: ";
         cin >> letter;
-        cout << "Позиція (0-" << length - 1 << "): ";
+        cout << "Позиція: ";
         cin >> position;
-        if (cin.eof()) {
-            return 0;
-        }
-        if (cin.fail() || position < 0 || position >= length) {
-            cin.clear();
-            cin.ignore(1000, '\n');
-            cout << "Такої позиції немає\n";
-            continue;
-        }
-        if (word[position] == letter) {
-            if (mask[position] == '*') {
-                mask[position] = letter;
-                opened++;
-            }
+        if (position >= 0 && position < length && word[position] == letter && mask[position] == '*') {
+            mask[position] = letter;
+            opened++;
             cout << "Вгадали!\n";
         } else {
             misses++;
@@ -74,9 +61,8 @@ int main() {
 
     print_mask(mask, length);
     if (opened == length) {
-        cout << "Перемога! Слово вгадано\n";
+        cout << "Перемога!\n";
     } else {
-        cout << "Спроби вичерпано. Загадане слово: " << word << "\n";
+        cout << "Поразка. Слово: " << word << "\n";
     }
-    return 0;
 }
