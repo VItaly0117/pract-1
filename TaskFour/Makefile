@@ -1,16 +1,16 @@
-CC = cc
-CFLAGS = -std=c11 -Wall -Wextra -pedantic -O2
+CXX = c++
+CXXFLAGS = -std=c++17 -Wall -Wextra -pedantic -O2
 RAYLIB = $(shell pkg-config --cflags --libs raylib)
 
 all: guess
 
-guess: main.c game.c game.h
-	$(CC) $(CFLAGS) -o $@ main.c game.c
+guess: main.cpp game.h
+	$(CXX) $(CXXFLAGS) -o $@ main.cpp
 
 gui: guess_gui
 
-guess_gui: gui.c game.c game.h
-	$(CC) $(CFLAGS) -o $@ gui.c game.c $(RAYLIB)
+guess_gui: gui.cpp game.h
+	$(CXX) $(CXXFLAGS) -o $@ gui.cpp $(RAYLIB)
 
 clean:
 	rm -f guess guess_gui
