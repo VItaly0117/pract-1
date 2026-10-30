@@ -1,32 +1,82 @@
-#include <cctype>
+#include <cstring>
 #include <iostream>
+#include <random>
 
-#include "game.h"
+using namespace std;
 
-std::string ask(const std::string &prompt) {
-    std::string line;
-    std::cout << prompt;
-    if (!std::getline(std::cin, line)) std::exit(0);
-    return line;
+const int MAX_MISSES = 5;
+const int WORD_COUNT = 7;
+const int MAX_LENGTH = 7;
+
+char WORDS[WORD_COUNT][MAX_LENGTH] = {
+    {'t', 'h', 'i', 's'},
+    {'i', 's'},
+    {'a'},
+    {'w', 'o', 'r', 'd'},
+    {'a', 'r', 'r', 'a', 'y'},
+    {'m', 'a', 't', 'r', 'i', 'x'},
+    {'l', 'e', 't', 't', 'e', 'r'},
+};
+
+void print_mask(char mask[], int length) {
+    cout << "{ ";
+    for (int i = 0; i < length; i++) {
+        cout << "'" << mask[i] << "'";
+        if (i < length - 1) {
+            cout << ", ";
+        }
+    }
+    cout << " }\n";
 }
 
 int main() {
-    Game game;
-    int length = (int)game.word.size();
-    std::cout << "Вгадай слово! Загадано слово з " << length << " літер, можна помилитися " << MAX_MISSES << " разів\n";
-    while (!game.won() && !game.lost()) {
-        std::cout << game.show() << "\n";
-        std::string letter = ask("Літера: ");
-        std::string position = ask("Позиція (0-" + std::to_string(length - 1) + "): ");
-        int index = position.size() == 1 && std::isdigit(position[0]) ? position[0] - '0' : -1;
-        if (letter.size() != 1 || !std::islower(letter[0]) || index < 0 || index >= length) {
-            std::cout << "Введіть малу латинську літеру та позицію від 0 до " << length - 1 << "\n";
-        } else if (game.guess(letter[0], index)) {
-            std::cout << "Вгадали!\n";
+    random_device random;
+    char *word = WORDS[random() % WORD_COUNT];
+    int length = strlen(word);
+
+    char mask[MAX_LENGTH];
+    for (int i = 0; i < length; i++) {
+        mask[i] = '*';
+    }
+
+    int misses = 0;
+    int opened = 0;
+    cout << "Вгадай слово! Загадано слово з " << length << " літер, можна помилитися " << MAX_MISSES << " разів\n";
+
+    while (opened < length && misses < MAX_MISSES) {
+        print_mask(mask, length);
+        char letter;
+        int position;
+        cout << "Літера: ";
+        cin >> letter;
+        cout << "Позиція (0-" << length - 1 << "): ";
+        cin >> position;
+        if (cin.eof()) {
+            return 0;
+        }
+        if (cin.fail() || position < 0 || position >= length) {
+            cin.clear();
+            cin.ignore(1000, '\n');
+            cout << "Такої позиції немає\n";
+            continue;
+        }
+        if (word[position] == letter) {
+            if (mask[position] == '*') {
+                mask[position] = letter;
+                opened++;
+            }
+            cout << "Вгадали!\n";
         } else {
-            std::cout << "Не вгадали. Залишилось спроб: " << MAX_MISSES - game.misses << "\n";
+            misses++;
+            cout << "Не вгадали. Залишилось спроб: " << MAX_MISSES - misses << "\n";
         }
     }
-    std::cout << game.show() << "\n";
-    std::cout << (game.won() ? "Перемога! Слово вгадано" : "Спроби вичерпано. Загадане слово: " + game.word) << "\n";
+
+    print_mask(mask, length);
+    if (opened == length) {
+        cout << "Перемога! Слово вгадано\n";
+    } else {
+        cout << "Спроби вичерпано. Загадане слово: " << word << "\n";
+    }
+    return 0;
 }
