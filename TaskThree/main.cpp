@@ -6,6 +6,7 @@
 
 using namespace std;
 
+// Одна анкета
 struct Student {
     string login;
     string password;
@@ -16,12 +17,15 @@ struct Student {
     bool is_student;
 };
 
+// Тут лежать усі анкети, поки програма працює
 vector<Student> students;
 
+// Пароль у файл не пишемо, тільки його хеш. Логін додаємо, щоб однакові паролі давали різний хеш
 string hash_password(string login, string password) {
     return to_string(hash<string>{}(login + password));
 }
 
+// Читаємо анкети з файлу. Якщо файлу ще немає, створюємо порожній
 void load_file() {
     ifstream file("students.csv");
     if (!file) {
@@ -29,6 +33,7 @@ void load_file() {
         ofstream("students.csv");
         return;
     }
+    // Кожен рядок файлу це одна анкета, поля розділені комами
     string line;
     while (getline(file, line)) {
         stringstream row(line);
@@ -47,6 +52,7 @@ void load_file() {
     }
 }
 
+// Перезаписуємо файл усіма анкетами
 void save_file() {
     ofstream file("students.csv");
     for (Student s : students) {
@@ -55,11 +61,13 @@ void save_file() {
     }
 }
 
+// Виводимо одну анкету в один рядок
 void print_student(Student s) {
     cout << s.name << " " << s.surname << ", вік: " << s.age << ", студент: " << (s.is_student ? "так" : "ні")
          << ", роль: " << s.role << "\n";
 }
 
+// Питаємо дані нової анкети і одразу зберігаємо у файл
 void register_student(string role) {
     Student s;
     string password, answer;
@@ -84,6 +92,7 @@ void register_student(string role) {
     print_student(s);
 }
 
+// Показуємо анкети з таким ім'ям. Якщо ім'я порожнє, показуємо всі
 void find_by_name(string name) {
     for (Student s : students) {
         if (name == "" || s.name == name) {
@@ -92,6 +101,7 @@ void find_by_name(string name) {
     }
 }
 
+// Меню, яке бачить тільки адміністратор
 void admin_menu() {
     string choice, name;
     while (true) {
@@ -111,6 +121,7 @@ void admin_menu() {
     }
 }
 
+// Вхід: шукаємо анкету з таким логіном і порівнюємо хеш пароля
 void login() {
     string login, password;
     cout << "Логін: ";
@@ -132,6 +143,7 @@ void login() {
 
 int main() {
     load_file();
+    // Якщо анкет ще немає, спочатку створюємо адміністратора
     if (students.empty()) {
         cout << "Створіть адміністратора\n";
         register_student("admin");
