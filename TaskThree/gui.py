@@ -128,7 +128,8 @@ class App(tk.Tk):
         self.clear()
         self.unbind("<Return>")
         self.header(f"Вітаємо, {user.name}!")
-        card = ttk.LabelFrame(self.body, text="Мої дані", padding=16)
+        ttk.Label(self.body, text="Мої дані", font=("Helvetica", 15, "bold")).pack(anchor="w", pady=(0, 8))
+        card = ttk.Frame(self.body)
         card.pack(anchor="w")
         rows = (
             ("Логін", user.login),
@@ -140,7 +141,7 @@ class App(tk.Tk):
         )
         for row, (label, value) in enumerate(rows):
             ttk.Label(card, text=f"{label}:").grid(row=row, column=0, sticky="w", padx=(0, 16), pady=3)
-            ttk.Label(card, text=value, font=("Helvetica", 13, "bold")).grid(row=row, column=1, sticky="w")
+            ttk.Label(card, text=str(value), font=("Helvetica", 13, "bold")).grid(row=row, column=1, sticky="w")
 
     def show_admin(self, user: Student) -> None:
         self.clear()
