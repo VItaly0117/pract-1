@@ -1,6 +1,8 @@
 #include <cstring>
-#include <iostream>
 #include <random>
+#include <string>
+
+#include "raylib.h"
 
 using namespace std;
 
@@ -18,59 +20,100 @@ char WORDS[7][7] = {
     {'l', 'e', 't', 't', 'e', 'r'},
 };
 
-// Виводимо слово у вигляді { 'i', '*' }
-void print_mask(char mask[], int length) {
-    cout << "{ ";
-    for (int i = 0; i < length; i++) {
-        cout << "'" << mask[i] << "'";
-        if (i < length - 1) {
-            cout << ", ";
-        }
-    }
-    cout << " }\n";
+char *word;
+int length;
+char mask[7];
+int misses;
+int opened;
+int selected;
+Font font;
+
+// Шрифт з кирилицею, бо стандартний шрифт raylib знає тільки латиницю
+Font load_font() {
+    int codepoints[352];
+    int count = 0;
+    for (int c = 32; c < 128; c++) codepoints[count++] = c;
+    for (int c = 0x400; c < 0x500; c++) codepoints[count++] = c;
+    const char *path = "/System/Library/Fonts/Supplemental/Arial.ttf";
+    if (!FileExists(path)) path = "C:/Windows/Fonts/arial.ttf";
+    return LoadFontEx(path, 48, codepoints, count);
 }
 
-int main() {
-    // Беремо випадкове слово з матриці
-    random_device random;
-    char *word = WORDS[random() % 7];
-    int length = strlen(word);
+void text(string s, float x, float y, float size, Color color) {
+    DrawTextEx(font, s.c_str(), {x, y}, size, 0, color);
+}
 
-    // Спочатку всі літери закриті зірочками
-    char mask[7];
+// Беремо випадкове слово і закриваємо всі літери зірочками
+void new_game() {
+    random_device random;
+    word = WORDS[random() % 7];
+    length = strlen(word);
     for (int i = 0; i < length; i++) {
         mask[i] = '*';
     }
+    misses = 0;
+    opened = 0;
+    selected = 0;
+}
 
-    // misses це помилки, opened це скільки літер уже відкрито
-    int misses = 0;
-    int opened = 0;
-    cout << "Загадано слово з " << length << " літер\n";
+int main() {
+    InitWindow(640, 400, "Вгадай слово");
+    SetTargetFPS(60);
+    font = load_font();
+    new_game();
 
-    // Граємо, поки не відкрили все слово або не закінчились спроби
-    while (opened < length && misses < MAX_MISSES) {
-        print_mask(mask, length);
-        char letter;
-        int position;
-        cout << "Літера: ";
-        cin >> letter;
-        cout << "Позиція: ";
-        cin >> position;
-        // Якщо на цій позиції саме ця літера, відкриваємо її
-        if (position >= 0 && position < length && word[position] == letter && mask[position] == '*') {
-            mask[position] = letter;
-            opened++;
-            cout << "Вгадали!\n";
-        } else {
-            misses++;
-            cout << "Не вгадали. Залишилось спроб: " << MAX_MISSES - misses << "\n";
+    while (!WindowShouldClose()) {
+        bool playing = opened < length && misses < MAX_MISSES;
+        Vector2 mouse = GetMousePosition();
+        bool click = IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
+
+        // Клік по клітинці обирає позицію
+        for (int i = 0; i < length; i++) {
+            Rectangle cell = {40.0f + i * 90, 110, 80, 80};
+            if (click && CheckCollisionPointRec(mouse, cell)) selected = i;
         }
-    }
 
-    print_mask(mask, length);
-    if (opened == length) {
-        cout << "Перемога!\n";
-    } else {
-        cout << "Поразка. Слово: " << word << "\n";
+        // Натиснута літера перевіряється на обраній позиції
+        int key = GetKeyPressed();
+        if (playing && key >= KEY_A && key <= KEY_Z) {
+            char letter = 'a' + (key - KEY_A);
+            if (word[selected] == letter && mask[selected] == '*') {
+                mask[selected] = letter;
+                opened++;
+            } else {
+                misses++;
+            }
+        }
+
+        Rectangle restart = {40, 320, 180, 44};
+        if (click && CheckCollisionPointRec(mouse, restart)) new_game();
+
+        BeginDrawing();
+        ClearBackground(RAYWHITE);
+        text("Вгадай слово", 40, 30, 36, DARKGRAY);
+
+        for (int i = 0; i < length; i++) {
+            Rectangle cell = {40.0f + i * 90, 110, 80, 80};
+            Color color = WHITE;
+            if (i == selected) color = GOLD;
+            if (mask[i] != '*') color = LIME;
+            DrawRectangleRec(cell, color);
+            DrawRectangleLinesEx(cell, 2, GRAY);
+            text(string(1, mask[i]), cell.x + 28, cell.y + 18, 44, BLACK);
+        }
+
+        text("Помилки: " + to_string(misses) + " з " + to_string(MAX_MISSES), 40, 215, 24, DARKGRAY);
+        if (opened == length) {
+            text("Перемога!", 40, 260, 28, DARKGREEN);
+        } else if (misses >= MAX_MISSES) {
+            text("Поразка. Слово: " + string(word), 40, 260, 28, MAROON);
+        } else {
+            text("Оберіть клітинку і натисніть літеру", 40, 260, 24, GRAY);
+        }
+
+        DrawRectangleRec(restart, SKYBLUE);
+        text("Нова гра", restart.x + 40, restart.y + 10, 24, BLACK);
+        EndDrawing();
     }
+    CloseWindow();
 }
