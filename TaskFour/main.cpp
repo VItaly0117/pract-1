@@ -26,6 +26,7 @@ char mask[7];
 int misses;
 int opened;
 int selected;
+string status;  // що сталося після останнього натискання
 Font font;
 
 // Шрифт з кирилицею, бо стандартний шрифт raylib знає тільки латиницю
@@ -54,6 +55,7 @@ void new_game() {
     misses = 0;
     opened = 0;
     selected = 0;
+    status = "Оберіть клітинку і натисніть літеру";
 }
 
 int main() {
@@ -73,15 +75,22 @@ int main() {
             if (click && CheckCollisionPointRec(mouse, cell)) selected = i;
         }
 
-        // Натиснута літера перевіряється на обраній позиції
+        // Натиснута клавіша перевіряється на обраній позиції.
+        // Помилки користувача (не та клавіша, вже відкрита клітинка) не рахуються як невдала спроба
         int key = GetKeyPressed();
-        if (playing && key >= KEY_A && key <= KEY_Z) {
+        if (playing && key != 0) {
             char letter = 'a' + (key - KEY_A);
-            if (word[selected] == letter && mask[selected] == '*') {
+            if (key < KEY_A || key > KEY_Z) {
+                status = "Натискайте тільки латинські літери";
+            } else if (mask[selected] != '*') {
+                status = "Ця клітинка вже відкрита, оберіть іншу";
+            } else if (word[selected] == letter) {
                 mask[selected] = letter;
                 opened++;
+                status = "Вгадали!";
             } else {
                 misses++;
+                status = "Літери " + string(1, letter) + " на цій позиції немає";
             }
         }
 
@@ -108,7 +117,7 @@ int main() {
         } else if (misses >= MAX_MISSES) {
             text("Поразка. Слово: " + string(word), 40, 260, 28, MAROON);
         } else {
-            text("Оберіть клітинку і натисніть літеру", 40, 260, 24, GRAY);
+            text(status, 40, 260, 24, GRAY);
         }
 
         DrawRectangleRec(restart, SKYBLUE);

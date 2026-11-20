@@ -72,12 +72,32 @@ string student_info(int i) {
            (students[i] ? "так" : "ні") + ", роль: " + roles[i];
 }
 
+// Перевіряємо все, що міг неправильно ввести користувач, і тільки потім зберігаємо
 void register_student() {
-    int age = atoi(age_text.c_str());
     if (login_text == "" || password_text == "" || name_text == "" || surname_text == "") {
         message = "Заповніть логін, пароль, ім'я та прізвище";
         return;
     }
+    if (login_text.find(' ') != string::npos) {
+        message = "Логін не може містити пробіли";
+        return;
+    }
+    if (password_text.size() < 4) {
+        message = "Пароль має містити щонайменше 4 символи";
+        return;
+    }
+    // Кома розділяє поля у CSV, тому з нею файл зламається
+    if ((login_text + password_text + name_text + surname_text).find(',') != string::npos) {
+        message = "Поля не можуть містити кому";
+        return;
+    }
+    if ((name_text + surname_text).find_first_of("0123456789") != string::npos) {
+        message = "Ім'я та прізвище не можуть містити цифри";
+        return;
+    }
+    // Вік приймаємо тільки з цифр, щоб "12abc" не став числом 12
+    bool only_digits = age_text != "" && age_text.find_first_not_of("0123456789") == string::npos;
+    int age = only_digits ? atoi(age_text.c_str()) : 0;
     if (age < 1 || age > 120) {
         message = "Вік має бути числом від 1 до 120";
         return;
@@ -103,6 +123,10 @@ void register_student() {
 
 // Шукаємо анкету з таким логіном і порівнюємо хеш пароля
 void login() {
+    if (login_text == "" || password_text == "") {
+        message = "Введіть логін і пароль";
+        return;
+    }
     for (int i = 0; i < (int)logins.size(); i++) {
         if (logins[i] == login_text && passwords[i] == hash_password(login_text, password_text)) {
             user = i;
@@ -145,7 +169,8 @@ void input(string label, string &value, int id, float x, float y, bool hidden = 
     if (clicked(r)) focus = id;
     if (focus == id) {
         int c;
-        while ((c = GetCharPressed()) > 0) {
+        // Не даємо вводити далі, коли текст вже не влазить у поле
+        while ((c = GetCharPressed()) > 0 && MeasureTextEx(font, value.c_str(), 20, 0).x < 195) {
             int size;
             const char *bytes = CodepointToUTF8(c, &size);
             value += string(bytes, size);
